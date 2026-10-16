@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peter's ShopSphere | Online Store</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #222;
+        }
+
+        header {
+            background: #14213d;
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        nav {
+            background: #fca311;
+            padding: 12px;
+            text-align: center;
+        }
+
+        nav a {
+            color: #14213d;
+            margin: 0 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        main {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .products {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .product {
+            background: white;
+            padding: 24px;
+            border-radius: 10px;
+            width: 200px;
+            box-shadow: 0 2px 8px #00000012;
+        }
+
+        .price {
+            color: #167d45;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Peter's ShopSphere</h1>
+        <p>Everything you need, all in one place.</p>
+    </header>
+
+    <nav>
+        <a href="#">Home</a>
+        <a href="#products">Products</a>
+        <a href="#about">About Us</a>
+    </nav>
+
+    <main>
+        <h2>Welcome to ShopSphere</h2>
+        <p>Discover quality products at affordable prices.</p>
+
+        <section class="products" id="products">
+            <article class="product">
+                <h3>Wireless Headphones</h3>
+                <p>Enjoy your favourite music.</p>
+                <p class="price">$49.99</p>
+            </article>
+
+            <article class="product">
+                <h3>Smart Watch</h3>
+                <p>Stay connected throughout the day.</p>
+                <p class="price">$79.99</p>
+            </article>
+
+            <article class="product">
+                <h3>Travel Backpack</h3>
+                <p>Ready for your next adventure.</p>
+                <p class="price">$34.99</p>
+            </article>
+        </section>
+
+        <section id="about">
+            <h2>About ShopSphere</h2>
+            <p>We make online shopping simple and convenient.</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>ShopSphere &copy; 2026. Built as a cloud engineering project.</p>
+    </footer>
+</body>
+</html>
