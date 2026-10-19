@@ -1,0 +1,26 @@
+
+name: ShopSphere CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download repository code
+        uses: actions/checkout@v4
+
+      - name: Check required files
+        run: |
+          test -f Dockerfile
+          test -f index.html
+
+      - name: Build Docker image
+        run: docker build -t shopsphere-web:ci .
