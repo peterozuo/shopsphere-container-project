@@ -1,5 +1,5 @@
 
-name: ShopSphere CI
+name: ShopSphere CI/CD
 
 on:
   push:
@@ -9,9 +9,16 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Download repository code
@@ -22,5 +29,27 @@ jobs:
           test -f Dockerfile
           test -f index.html
 
+      - name: Configure AWS credentials
+        if: github.event_name == 'push'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::361781332713:role/GitHubActionsECRRole
+          aws-region: eu-north-1
+
+      - name: Login to Amazon ECR
+        if: github.event_name == 'push'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
       - name: Build Docker image
         run: docker build -t shopsphere-web:ci .
+
+      - name: Build and push image to ECR
+        if: github.event_name == 'push'
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: shopsphere-web
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker tag shopsphere-web:ci "$REGISTRY/$REPOSITORY:$IMAGE_TAG"
+          docker push "$REGISTRY/$REPOSITORY:$IMAGE_TAG"
