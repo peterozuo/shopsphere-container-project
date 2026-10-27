@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     permissions:
@@ -21,13 +21,16 @@ jobs:
       id-token: write
 
     steps:
-      - name: Download repository code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Check required files
         run: |
           test -f Dockerfile
           test -f index.html
+
+      - name: Build Docker image
+        run: docker build -t shopsphere-web:ci .
 
       - name: Configure AWS credentials
         if: github.event_name == 'push'
@@ -41,10 +44,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build Docker image
-        run: docker build -t shopsphere-web:ci .
-
-      - name: Build and push image to ECR
+      - name: Push image to ECR
         if: github.event_name == 'push'
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -53,3 +53,50 @@ jobs:
         run: |
           docker tag shopsphere-web:ci "$REGISTRY/$REPOSITORY:$IMAGE_TAG"
           docker push "$REGISTRY/$REPOSITORY:$IMAGE_TAG"
+          echo "IMAGE_URI=$REGISTRY/$REPOSITORY:$IMAGE_TAG" >> "$GITHUB_ENV"
+
+      - name: Create updated ECS task definition
+        if: github.event_name == 'push'
+        env:
+          IMAGE_URI: ${{ env.IMAGE_URI }}
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition shopsphere-task \
+            --query taskDefinition \
+            --output json > task-definition.json
+
+          jq --arg IMAGE "$IMAGE_URI" '
+            .containerDefinitions |= map(.image = $IMAGE)
+            | del(
+                .taskDefinitionArn,
+                .revision,
+                .status,
+                .requiresAttributes,
+                .compatibilities,
+                .registeredAt,
+                .registeredBy
+              )
+          ' task-definition.json > task-definition-updated.json
+
+      - name: Register updated task definition
+        if: github.event_name == 'push'
+        id: task-def
+        run: |
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://task-definition-updated.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "task-definition-arn=$TASK_DEF_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to Amazon ECS
+        if: github.event_name == 'push'
+        run: |
+          aws ecs update-service \
+            --cluster shopsphere-cluster \
+            --service shopsphere-service \
+            --task-definition "${{ steps.task-def.outputs.task-definition-arn }}"
+
+          aws ecs wait services-stable \
+            --cluster shopsphere-cluster \
+            --services shopsphere-service
